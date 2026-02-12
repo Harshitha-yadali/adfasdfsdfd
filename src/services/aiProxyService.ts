@@ -2,9 +2,10 @@
 // Unified frontend service for all AI API calls
 // Uses local API keys for development, Supabase Edge Function for production
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
-const PROXY_URL = `${SUPABASE_URL}/functions/v1/ai-proxy`;
+const SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL || '').trim();
+const SUPABASE_ANON_KEY = (import.meta.env.VITE_SUPABASE_ANON_KEY || '').trim();
+const PROXY_PATH = '/functions/v1/ai-proxy';
+const PROXY_URL = SUPABASE_URL ? `${SUPABASE_URL}${PROXY_PATH}` : PROXY_PATH;
 
 // Local API keys (for development)
 const LOCAL_EDENAI_KEY = import.meta.env.VITE_EDENAI_API_KEY || '';
@@ -21,6 +22,19 @@ console.log('🔧 AI Proxy Mode:', USE_LOCAL_KEYS ? 'LOCAL (using .env keys)' : 
  * Call the AI proxy Edge Function
  */
 const callProxy = async (service: string, action: string, params: Record<string, any> = {}) => {
+  const isAbsoluteUrl = /^https?:\/\//i.test(PROXY_URL);
+  if (!isAbsoluteUrl) {
+    throw new Error(
+      'AI proxy URL is not configured. Set VITE_SUPABASE_URL to your Supabase project URL in deployment env vars.'
+    );
+  }
+
+  if (!SUPABASE_ANON_KEY) {
+    throw new Error(
+      'Supabase anon key is missing. Set VITE_SUPABASE_ANON_KEY in deployment env vars.'
+    );
+  }
+
   const response = await fetch(PROXY_URL, {
     method: 'POST',
     headers: {
@@ -30,10 +44,27 @@ const callProxy = async (service: string, action: string, params: Record<string,
     body: JSON.stringify({ service, action, ...params }),
   });
 
-  const data = await response.json();
-  
+  const rawText = await response.text();
+  const data = rawText ? (() => {
+    try {
+      return JSON.parse(rawText);
+    } catch {
+      return null;
+    }
+  })() : null;
+
   if (!response.ok) {
-    throw new Error(data.error || `Proxy request failed: ${response.status}`);
+    const responseError =
+      typeof data?.error === 'string' && data.error.trim()
+        ? data.error.trim()
+        : rawText.trim() || 'Empty response body';
+    throw new Error(`AI proxy request failed (${response.status}): ${responseError}`);
+  }
+
+  if (!data) {
+    throw new Error(
+      `AI proxy returned empty or non-JSON response for ${service}/${action}. URL: ${PROXY_URL}`
+    );
   }
 
   return data;
