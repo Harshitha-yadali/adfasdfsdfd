@@ -2,8 +2,12 @@
 // Unified frontend service for all AI API calls
 // Uses local API keys for development, Supabase Edge Function for production
 
-const SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL || '').trim();
-const SUPABASE_ANON_KEY = (import.meta.env.VITE_SUPABASE_ANON_KEY || '').trim();
+const FALLBACK_SUPABASE_URL = 'https://rixmudvtbfkjpwjoefon.supabase.co';
+const FALLBACK_SUPABASE_ANON_KEY =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJpeG11ZHZ0YmZranB3am9lZm9uIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA1ODk4NzIsImV4cCI6MjA2NjE2NTg3Mn0.PQss75_gbLaiJDFxKvCuHNirUVkKUGrINYGO1oewQGA';
+
+const SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL || FALLBACK_SUPABASE_URL).trim();
+const SUPABASE_ANON_KEY = (import.meta.env.VITE_SUPABASE_ANON_KEY || FALLBACK_SUPABASE_ANON_KEY).trim();
 const PROXY_PATH = '/functions/v1/ai-proxy';
 const PROXY_URL = SUPABASE_URL ? `${SUPABASE_URL}${PROXY_PATH}` : PROXY_PATH;
 
@@ -17,6 +21,8 @@ const LOCAL_GITHUB_TOKEN = import.meta.env.VITE_GITHUB_API_TOKEN || '';
 const USE_LOCAL_KEYS = LOCAL_EDENAI_KEY.length > 10;
 
 console.log('🔧 AI Proxy Mode:', USE_LOCAL_KEYS ? 'LOCAL (using .env keys)' : 'PROXY (using Supabase Edge Function)');
+console.log('🔧 Supabase URL source:', import.meta.env.VITE_SUPABASE_URL ? 'ENV' : 'FALLBACK');
+console.log('🔧 Supabase anon key source:', import.meta.env.VITE_SUPABASE_ANON_KEY ? 'ENV' : 'FALLBACK');
 
 /**
  * Call the AI proxy Edge Function
