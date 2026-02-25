@@ -13,8 +13,16 @@
 // ======================
 // SUPABASE
 // ======================
-export const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
+const DEFAULT_SUPABASE_URL = 'https://rixmudvtbfkjpwjoefon.supabase.co';
+const RAW_SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL || '').trim();
+const RAW_SUPABASE_PUBLIC_URL = (import.meta.env.VITE_SUPABASE_PUBLIC_URL || '').trim();
+const normalizeUrl = (url: string): string => url.trim().replace(/\/+$/, '');
+
+export const SUPABASE_DIRECT_URL = normalizeUrl(RAW_SUPABASE_URL || DEFAULT_SUPABASE_URL);
+export const SUPABASE_PUBLIC_URL = normalizeUrl(RAW_SUPABASE_PUBLIC_URL || SUPABASE_DIRECT_URL);
+export const SUPABASE_URL = SUPABASE_PUBLIC_URL;
 export const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+export const SUPABASE_FALLBACK_URL = SUPABASE_PUBLIC_URL === SUPABASE_DIRECT_URL ? '' : SUPABASE_DIRECT_URL;
 
 // ======================
 // RAZORPAY (Frontend - Public Key Only)
@@ -68,8 +76,80 @@ export const MODE = import.meta.env.MODE;
 /**
  * Get Supabase Edge Function URL
  */
-export const getSupabaseEdgeFunctionUrl = (functionName: string): string => {
-  return `${SUPABASE_URL}/functions/v1/${functionName}`;
+export const getSupabaseEdgeFunctionUrl = (
+  functionName: string,
+  queryParams?: string | URLSearchParams
+): string => {
+  const normalizedFunctionName = functionName.replace(/^\/+/, '');
+  const baseUrl = `${SUPABASE_URL}/functions/v1/${normalizedFunctionName}`;
+  if (!queryParams) return baseUrl;
+
+  const queryString = typeof queryParams === 'string' ? queryParams : queryParams.toString();
+  if (!queryString) return baseUrl;
+  return `${baseUrl}${queryString.startsWith('?') ? queryString : `?${queryString}`}`;
+};
+
+/**
+ * Network-level routing failures seen on some ISPs.
+ */
+const SUPABASE_NETWORK_ERROR_PATTERNS = [
+  'failed to fetch',
+  'networkerror',
+  'err_network_changed',
+  'network changed',
+];
+
+export const isSupabaseNetworkRoutingError = (error: unknown): boolean => {
+  if (!(error instanceof Error)) return false;
+  const message = error.message.toLowerCase();
+  return SUPABASE_NETWORK_ERROR_PATTERNS.some((pattern) => message.includes(pattern));
+};
+
+const resolveRequestUrl = (input: RequestInfo | URL): string | null => {
+  if (typeof input === 'string') return input;
+  if (input instanceof URL) return input.toString();
+  return null;
+};
+
+/**
+ * Creates a fetch wrapper that retries Supabase requests once via fallback URL
+ * when the first request fails with a routing-level network error.
+ */
+export const createSupabaseNetworkFetch = (): typeof fetch => {
+  return async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+    try {
+      return await fetch(input, init);
+    } catch (error) {
+      const requestUrl = resolveRequestUrl(input);
+      const canRetryWithFallback =
+        !!SUPABASE_FALLBACK_URL &&
+        !!requestUrl &&
+        requestUrl.startsWith(SUPABASE_URL) &&
+        SUPABASE_FALLBACK_URL !== SUPABASE_URL &&
+        isSupabaseNetworkRoutingError(error);
+
+      if (!canRetryWithFallback) {
+        throw error;
+      }
+
+      const fallbackUrl = requestUrl.replace(SUPABASE_URL, SUPABASE_FALLBACK_URL);
+      console.warn('Primary Supabase route failed, retrying via fallback URL', {
+        primaryUrl: SUPABASE_URL,
+        fallbackUrl: SUPABASE_FALLBACK_URL,
+      });
+
+      if (typeof input === 'string') {
+        return fetch(fallbackUrl, init);
+      }
+
+      if (input instanceof URL) {
+        return fetch(new URL(fallbackUrl), init);
+      }
+
+      // Do not retry Request objects to avoid body stream reuse issues.
+      throw error;
+    }
+  };
 };
 
 /**
@@ -93,7 +173,7 @@ export const isConfigured = (value: string | undefined): boolean => {
  */
 export const validateRequiredEnvVars = (): { valid: boolean; missing: string[] } => {
   const required = [
-    { name: 'VITE_SUPABASE_URL', value: SUPABASE_URL },
+    { name: 'VITE_SUPABASE_URL or VITE_SUPABASE_PUBLIC_URL', value: RAW_SUPABASE_URL || RAW_SUPABASE_PUBLIC_URL },
     { name: 'VITE_SUPABASE_ANON_KEY', value: SUPABASE_ANON_KEY },
     { name: 'VITE_RAZORPAY_KEY_ID', value: RAZORPAY_KEY_ID },
     { name: 'VITE_WORKER_API_URL', value: WORKER_API_URL },
@@ -113,8 +193,11 @@ export const validateRequiredEnvVars = (): { valid: boolean; missing: string[] }
 // ======================
 const env = {
   // Supabase
+  SUPABASE_DIRECT_URL,
+  SUPABASE_PUBLIC_URL,
   SUPABASE_URL,
   SUPABASE_ANON_KEY,
+  SUPABASE_FALLBACK_URL,
   
   // Razorpay
   RAZORPAY_KEY_ID,
@@ -149,6 +232,8 @@ const env = {
   
   // Helpers
   getSupabaseEdgeFunctionUrl,
+  createSupabaseNetworkFetch,
+  isSupabaseNetworkRoutingError,
   getWorkerEndpoint,
   isConfigured,
   validateRequiredEnvVars,

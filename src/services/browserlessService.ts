@@ -1,4 +1,5 @@
 import { AutoApplyFormData, FormFieldMapping, FormAnalysisResult } from '../types/autoApply';
+import { SUPABASE_ANON_KEY, getSupabaseEdgeFunctionUrl } from '../config/env';
 
 export interface BrowserlessConfig {
   wsEndpoint: string;
@@ -29,6 +30,8 @@ export interface BrowserlessSubmitResult {
   screenshot?: string;
   error?: string;
 }
+
+const BROWSERLESS_AUTOMATION_URL = getSupabaseEdgeFunctionUrl('browserless-automation');
 
 class BrowserlessService {
   private config: BrowserlessConfig;
@@ -61,14 +64,12 @@ class BrowserlessService {
       throw new Error('Browserless service not configured');
     }
 
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-    const response = await fetch(`${supabaseUrl}/functions/v1/browserless-automation`, {
+        
+    const response = await fetch(`${BROWSERLESS_AUTOMATION_URL}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${supabaseAnonKey}`,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
       },
       body: JSON.stringify({
         action: 'analyze',
@@ -95,14 +96,12 @@ class BrowserlessService {
       };
     }
 
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-    const response = await fetch(`${supabaseUrl}/functions/v1/browserless-automation`, {
+        
+    const response = await fetch(`${BROWSERLESS_AUTOMATION_URL}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${supabaseAnonKey}`,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
       },
       body: JSON.stringify({
         action: 'navigate',
@@ -138,14 +137,12 @@ class BrowserlessService {
       };
     }
 
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-    const response = await fetch(`${supabaseUrl}/functions/v1/browserless-automation`, {
+        
+    const response = await fetch(`${BROWSERLESS_AUTOMATION_URL}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${supabaseAnonKey}`,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
       },
       body: JSON.stringify({
         action: 'fill',
@@ -181,14 +178,12 @@ class BrowserlessService {
       };
     }
 
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-    const response = await fetch(`${supabaseUrl}/functions/v1/browserless-automation`, {
+        
+    const response = await fetch(`${BROWSERLESS_AUTOMATION_URL}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${supabaseAnonKey}`,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
       },
       body: JSON.stringify({
         action: 'upload',
@@ -218,14 +213,12 @@ class BrowserlessService {
       };
     }
 
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-    const response = await fetch(`${supabaseUrl}/functions/v1/browserless-automation`, {
+        
+    const response = await fetch(`${BROWSERLESS_AUTOMATION_URL}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${supabaseAnonKey}`,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
       },
       body: JSON.stringify({
         action: 'submit',
@@ -251,14 +244,12 @@ class BrowserlessService {
     }
 
     try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-      const response = await fetch(`${supabaseUrl}/functions/v1/browserless-automation`, {
+            
+      const response = await fetch(`${BROWSERLESS_AUTOMATION_URL}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${supabaseAnonKey}`,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
         },
         body: JSON.stringify({
           action: 'screenshot',
@@ -285,14 +276,12 @@ class BrowserlessService {
     }
 
     try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-      await fetch(`${supabaseUrl}/functions/v1/browserless-automation`, {
+            
+      await fetch(`${BROWSERLESS_AUTOMATION_URL}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${supabaseAnonKey}`,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
         },
         body: JSON.stringify({
           action: 'close',
@@ -310,14 +299,12 @@ class BrowserlessService {
     }
 
     try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-      const response = await fetch(`${supabaseUrl}/functions/v1/browserless-automation`, {
+            
+      const response = await fetch(`${BROWSERLESS_AUTOMATION_URL}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${supabaseAnonKey}`,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
         },
         body: JSON.stringify({
           action: 'health',
@@ -334,3 +321,4 @@ class BrowserlessService {
 }
 
 export const browserlessService = new BrowserlessService();
+

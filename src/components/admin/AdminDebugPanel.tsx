@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Shield, RefreshCw, CheckCircle, XCircle, AlertTriangle, Info, Eye, EyeOff, Database, ExternalLink } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
+import { SUPABASE_URL } from '../../config/env';
 
 interface AdminStatus {
   authenticated: boolean;
@@ -27,7 +28,7 @@ export const AdminDebugPanel: React.FC = () => {
 
   useEffect(() => {
     // Get the current database URL from environment
-    const dbUrl = import.meta.env.VITE_SUPABASE_URL;
+    const dbUrl = SUPABASE_URL;
     setCurrentDbUrl(dbUrl || 'Not configured');
 
     // Check database connection on mount

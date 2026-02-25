@@ -1,5 +1,6 @@
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+import { SUPABASE_ANON_KEY, getSupabaseEdgeFunctionUrl } from '../config/env';
+
+const AI_PROXY_URL = getSupabaseEdgeFunctionUrl('ai-proxy');
 
 interface KnowledgeEntry {
   keywords: string[];
@@ -130,10 +131,10 @@ function findBestMatch(query: string): string | null {
 }
 
 async function tryAIResponse(userMessage: string): Promise<string | null> {
-  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return null;
+  if (!SUPABASE_ANON_KEY) return null;
 
   try {
-    const res = await fetch(`${SUPABASE_URL}/functions/v1/ai-proxy`, {
+    const res = await fetch(AI_PROXY_URL, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${SUPABASE_ANON_KEY}`,

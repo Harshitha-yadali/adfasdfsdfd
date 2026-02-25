@@ -2,6 +2,7 @@
 import { AutoApplyRequest, AutoApplyResponse, FormAnalysisResult } from '../types/autoApply';
 import { browserlessService } from './browserlessService';
 import { detectPlatformStrategy, mapFormDataToFields } from './platformAutomationStrategies';
+import { SUPABASE_URL } from '../config/env';
 
 export type AutomationMode = 'browserless' | 'external' | 'simulation';
 
@@ -12,18 +13,18 @@ class ExternalBrowserService {
 
   constructor() {
     const externalUrl = import.meta.env.VITE_EXTERNAL_BROWSER_SERVICE_URL;
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseFunctionsBaseUrl = `${SUPABASE_URL}/functions/v1`;
     const browserWs = import.meta.env.BROWSER_WS;
 
     if (browserWs && browserlessService.isBrowserlessAvailable()) {
       this.automationMode = 'browserless';
-      this.baseUrl = `${supabaseUrl}/functions/v1`;
+      this.baseUrl = supabaseFunctionsBaseUrl;
     } else if (externalUrl && externalUrl.length > 0) {
       this.automationMode = 'external';
       this.baseUrl = externalUrl;
     } else {
       this.automationMode = 'simulation';
-      this.baseUrl = `${supabaseUrl}/functions/v1`;
+      this.baseUrl = supabaseFunctionsBaseUrl;
     }
 
     this.apiKey = import.meta.env.VITE_EXTERNAL_BROWSER_API_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY || '';

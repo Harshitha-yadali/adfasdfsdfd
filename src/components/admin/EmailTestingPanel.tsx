@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Mail, Send, CheckCircle, XCircle, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import { useIsAdmin } from '../../hooks/useIsAdmin';
+import { SUPABASE_ANON_KEY, getSupabaseEdgeFunctionUrl } from '../../config/env';
 
 interface EmailLog {
   id: string;
@@ -79,13 +80,12 @@ export const EmailTestingPanel: React.FC = () => {
 
   const loadSmtpStatus = async () => {
     try {
-      const siteUrl = import.meta.env.VITE_SUPABASE_URL;
       const { data: sessionData } = await supabase.auth.getSession();
       const token = sessionData.session?.access_token;
-      const resp = await fetch(`${siteUrl}/functions/v1/test-email`, {
+      const resp = await fetch(getSupabaseEdgeFunctionUrl('test-email'), {
         method: 'GET',
         headers: {
-          'Authorization': token ? `Bearer ${token}` : `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          'Authorization': token ? `Bearer ${token}` : `Bearer ${SUPABASE_ANON_KEY}`,
         }
       });
       const data = await resp.json();
@@ -112,14 +112,13 @@ export const EmailTestingPanel: React.FC = () => {
     setResult(null);
 
     try {
-      const siteUrl = import.meta.env.VITE_SUPABASE_URL;
       const { data: sessionData } = await supabase.auth.getSession();
       const token = sessionData.session?.access_token;
-      const response = await fetch(`${siteUrl}/functions/v1/test-email`, {
+      const response = await fetch(getSupabaseEdgeFunctionUrl('test-email'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': token ? `Bearer ${token}` : `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+          'Authorization': token ? `Bearer ${token}` : `Bearer ${SUPABASE_ANON_KEY}`
         },
         body: JSON.stringify({
           to: testEmail,

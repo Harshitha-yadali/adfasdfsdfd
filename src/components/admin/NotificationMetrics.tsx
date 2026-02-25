@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Bell, Mail, TrendingUp, Users, CheckCircle, XCircle, Loader2, Calendar } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
+import { SUPABASE_ANON_KEY, getSupabaseEdgeFunctionUrl } from '../../config/env';
 
 interface NotificationStats {
   total_subscribers: number;
@@ -45,16 +46,13 @@ export const NotificationMetrics: React.FC = () => {
 
   const triggerManualDigest = async () => {
     try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
       const response = await fetch(
-        `${supabaseUrl}/functions/v1/process-daily-job-digest`,
+        getSupabaseEdgeFunctionUrl('process-daily-job-digest'),
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${supabaseKey}`,
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
           },
         }
       );

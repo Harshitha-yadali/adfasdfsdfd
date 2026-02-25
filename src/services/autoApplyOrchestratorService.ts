@@ -5,6 +5,7 @@ import {
   ProjectSuggestion,
 } from './aiProjectSuggestionService';
 import jsPDF from 'jspdf';
+import { SUPABASE_ANON_KEY, getSupabaseEdgeFunctionUrl } from '../config/env';
 
 export interface AutoApplyStatus {
   step: 'analyzing' | 'suggesting_projects' | 'optimizing' | 'generating_pdf' | 'submitting' | 'completed' | 'failed';
@@ -357,16 +358,13 @@ class AutoApplyOrchestratorService {
     resumePdfUrl: string,
     platform: string
   ): Promise<void> {
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-    const edgeFunctionUrl = `${supabaseUrl}/functions/v1/auto-apply-submit`;
+    const edgeFunctionUrl = getSupabaseEdgeFunctionUrl('auto-apply-submit');
 
     const response = await fetch(edgeFunctionUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${supabaseAnonKey}`,
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
       },
       body: JSON.stringify({
         applicationId,

@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabaseClient';
 import { JobListing, JobFilters, AutoApplyResult, ApplicationHistory, OptimizedResume } from '../types/jobs';
 import { ResumeData } from '../types/resume';
 import { exportToPDF } from '../utils/exportUtils';
+import { getSupabaseEdgeFunctionUrl } from '../config/env';
 
 export const isEligibleYearsColumnMissing = (error: any): boolean => {
   if (!error) return false;
@@ -390,7 +391,7 @@ async getJobListings(filters: JobFilters = {}, limit = 20, offset = 0): Promise<
       if (!session) throw new Error('Authentication required');
 
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/optimize-resume-for-job`,
+        getSupabaseEdgeFunctionUrl('optimize-resume-for-job'),
         {
           method: 'POST',
           headers: {
@@ -457,7 +458,7 @@ async getJobListings(filters: JobFilters = {}, limit = 20, offset = 0): Promise<
       if (!session) throw new Error('Authentication required');
 
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/auto-apply`,
+        getSupabaseEdgeFunctionUrl('auto-apply'),
         {
           method: 'POST',
           headers: {
@@ -496,7 +497,7 @@ async getJobListings(filters: JobFilters = {}, limit = 20, offset = 0): Promise<
       });
 
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-application-history?${params}`,
+        getSupabaseEdgeFunctionUrl('get-application-history', params),
         {
           method: 'GET',
           headers: {

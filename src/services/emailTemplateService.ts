@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabaseClient';
+import { SUPABASE_ANON_KEY, getSupabaseEdgeFunctionUrl } from '../config/env';
 
 export interface EmailTemplate {
   id: string;
@@ -344,14 +345,14 @@ class EmailTemplateService {
       const token = sessionData.session?.access_token;
 
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/test-email`,
+        getSupabaseEdgeFunctionUrl('test-email'),
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': token
               ? `Bearer ${token}`
-              : `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+              : `Bearer ${SUPABASE_ANON_KEY}`
           },
           body: JSON.stringify({
             to,

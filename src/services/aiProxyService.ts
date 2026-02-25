@@ -2,14 +2,9 @@
 // Unified frontend service for all AI API calls
 // Uses local API keys for development, Supabase Edge Function for production
 
-const FALLBACK_SUPABASE_URL = 'https://rixmudvtbfkjpwjoefon.supabase.co';
-const FALLBACK_SUPABASE_ANON_KEY =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJpeG11ZHZ0YmZranB3am9lZm9uIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA1ODk4NzIsImV4cCI6MjA2NjE2NTg3Mn0.PQss75_gbLaiJDFxKvCuHNirUVkKUGrINYGO1oewQGA';
+import { SUPABASE_ANON_KEY, getSupabaseEdgeFunctionUrl } from '../config/env';
 
-const SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL || FALLBACK_SUPABASE_URL).trim();
-const SUPABASE_ANON_KEY = (import.meta.env.VITE_SUPABASE_ANON_KEY || FALLBACK_SUPABASE_ANON_KEY).trim();
-const PROXY_PATH = '/functions/v1/ai-proxy';
-const PROXY_URL = SUPABASE_URL ? `${SUPABASE_URL}${PROXY_PATH}` : PROXY_PATH;
+const PROXY_URL = getSupabaseEdgeFunctionUrl('ai-proxy');
 
 // Local API keys (for development)
 const LOCAL_EDENAI_KEY = import.meta.env.VITE_EDENAI_API_KEY || '';
@@ -21,7 +16,7 @@ const LOCAL_GITHUB_TOKEN = import.meta.env.VITE_GITHUB_API_TOKEN || '';
 const USE_LOCAL_KEYS = LOCAL_EDENAI_KEY.length > 10;
 
 console.log('🔧 AI Proxy Mode:', USE_LOCAL_KEYS ? 'LOCAL (using .env keys)' : 'PROXY (using Supabase Edge Function)');
-console.log('🔧 Supabase URL source:', import.meta.env.VITE_SUPABASE_URL ? 'ENV' : 'FALLBACK');
+console.log('🔧 Supabase URL source:', import.meta.env.VITE_SUPABASE_PUBLIC_URL ? 'PUBLIC URL ENV' : 'DIRECT URL ENV/FALLBACK');
 console.log('🔧 Supabase anon key source:', import.meta.env.VITE_SUPABASE_ANON_KEY ? 'ENV' : 'FALLBACK');
 
 /**
@@ -31,7 +26,7 @@ const callProxy = async (service: string, action: string, params: Record<string,
   const isAbsoluteUrl = /^https?:\/\//i.test(PROXY_URL);
   if (!isAbsoluteUrl) {
     throw new Error(
-      'AI proxy URL is not configured. Set VITE_SUPABASE_URL to your Supabase project URL in deployment env vars.'
+      'AI proxy URL is not configured. Set VITE_SUPABASE_PUBLIC_URL (or VITE_SUPABASE_URL) in deployment env vars.'
     );
   }
 

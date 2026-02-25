@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { careersData } from '../../data/careersData'; // Import the new data file
 import { useAuth } from '../../contexts/AuthContext';
+import { SUPABASE_ANON_KEY, getSupabaseEdgeFunctionUrl } from '../../config/env';
 
 interface Job {
   id: string;
@@ -200,12 +201,12 @@ export const JobDetailsPage: React.FC<JobDetailsPageProps> = ({ onShowAuth }) =>
       };
 
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/submit-job-application`,
+        getSupabaseEdgeFunctionUrl('submit-job-application'),
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+            Authorization: `Bearer ${SUPABASE_ANON_KEY}`
           },
           body: JSON.stringify(submitData)
         }

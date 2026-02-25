@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { SUPABASE_URL } from '../../config/env';
+import { getSupabaseEdgeFunctionUrl } from '../../config/env';
 import { motion } from 'framer-motion';
 import {
   Calendar,
@@ -122,7 +122,7 @@ export const SessionPayment: React.FC<SessionPaymentProps> = ({
       }
 
       const orderResponse = await fetch(
-        `${SUPABASE_URL || 'https://rixmudvtbfkjpwjoefon.supabase.co'}/functions/v1/create-order`,
+        getSupabaseEdgeFunctionUrl('create-order'),
         {
           method: 'POST',
           headers: {
