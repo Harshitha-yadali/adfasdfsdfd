@@ -122,11 +122,14 @@ const getSupabaseFallbackPlan = (requestUrl: string): { matchedBase: string; att
   const matchedBase = UNIQUE_SUPABASE_BASE_URLS.find((baseUrl) => requestUrl.startsWith(baseUrl));
   if (!matchedBase) return null;
 
+  const alternateUrls = UNIQUE_SUPABASE_BASE_URLS
+    .filter((baseUrl) => baseUrl !== matchedBase)
+    .map((baseUrl) => requestUrl.replace(matchedBase, baseUrl));
+
   const attemptUrls = [
     requestUrl,
-    ...UNIQUE_SUPABASE_BASE_URLS
-      .filter((baseUrl) => baseUrl !== matchedBase)
-      .map((baseUrl) => requestUrl.replace(matchedBase, baseUrl)),
+    requestUrl, // Retry same route once for intermittent mobile packet loss/timeouts.
+    ...alternateUrls,
   ];
 
   return { matchedBase, attemptUrls };
@@ -142,6 +145,8 @@ const createRetryInput = (
   if (requestTemplate) return new Request(retryUrl, requestTemplate.clone());
   return originalInput;
 };
+
+const delay = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
  * Creates a fetch wrapper that retries Supabase requests once via fallback URL
@@ -162,15 +167,22 @@ export const createSupabaseNetworkFetch = (): typeof fetch => {
       }
 
       let lastError: unknown = error;
-      for (const retryUrl of fallbackPlan.attemptUrls.slice(1)) {
+      const retryUrls = fallbackPlan.attemptUrls.slice(1);
+      for (let i = 0; i < retryUrls.length; i += 1) {
+        const retryUrl = retryUrls[i];
+        const isSameRouteRetry = retryUrl === requestUrl;
+
         console.warn('Supabase request failed, retrying with alternate route', {
           originalUrl: requestUrl,
           retryUrl,
+          retryType: isSameRouteRetry ? 'same-route' : 'alternate-route',
         });
 
         try {
+          await delay(250 * (i + 1));
           const retryInput = createRetryInput(input, requestTemplate, retryUrl);
-          return await fetch(retryInput, init);
+          const retryInit = input instanceof Request ? undefined : init;
+          return await fetch(retryInput, retryInit);
         } catch (retryError) {
           lastError = retryError;
           if (!isSupabaseNetworkRoutingError(retryError)) {
