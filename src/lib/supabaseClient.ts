@@ -1,6 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 import {
   SUPABASE_ANON_KEY,
+  SUPABASE_DIRECT_URL,
+  SUPABASE_FALLBACK_URL,
   SUPABASE_URL,
   createSupabaseNetworkFetch,
 } from '../config/env';
@@ -12,7 +14,9 @@ const supabaseAnonKey = SUPABASE_ANON_KEY || FALLBACK_SUPABASE_ANON_KEY;
 
 // Log whether we're using ENV or fallback
 console.log('SupabaseClient: Attempting to initialize client.');
-console.log('SupabaseClient: Base URL source:', import.meta.env.VITE_SUPABASE_PUBLIC_URL ? 'PUBLIC URL ENV' : 'DIRECT URL ENV/FALLBACK');
+console.log('SupabaseClient: Base URL:', SUPABASE_URL);
+console.log('SupabaseClient: Direct URL:', SUPABASE_DIRECT_URL);
+console.log('SupabaseClient: Fallback URL:', SUPABASE_FALLBACK_URL || 'none');
 console.log('SupabaseClient: VITE_SUPABASE_ANON_KEY:', import.meta.env.VITE_SUPABASE_ANON_KEY ? 'FROM ENV' : 'USING FALLBACK');
 
 // Custom storage adapter to handle iframe/sandboxed environments where localStorage is blocked

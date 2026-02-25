@@ -16,10 +16,46 @@
 const DEFAULT_SUPABASE_URL = 'https://rixmudvtbfkjpwjoefon.supabase.co';
 const RAW_SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL || '').trim();
 const RAW_SUPABASE_PUBLIC_URL = (import.meta.env.VITE_SUPABASE_PUBLIC_URL || '').trim();
+const RAW_SUPABASE_DIRECT_URL = (import.meta.env.VITE_SUPABASE_DIRECT_URL || '').trim();
 const normalizeUrl = (url: string): string => url.trim().replace(/\/+$/, '');
+const isValidAbsoluteUrl = (url: string): boolean => {
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+  } catch {
+    return false;
+  }
+};
+const normalizeConfiguredUrl = (url: string): string => {
+  const normalized = normalizeUrl(url);
+  return normalized && isValidAbsoluteUrl(normalized) ? normalized : '';
+};
+const isSupabaseHostedUrl = (url: string): boolean => {
+  try {
+    return new URL(url).hostname.endsWith('.supabase.co');
+  } catch {
+    return false;
+  }
+};
 
-export const SUPABASE_DIRECT_URL = normalizeUrl(RAW_SUPABASE_URL || DEFAULT_SUPABASE_URL);
-export const SUPABASE_PUBLIC_URL = normalizeUrl(RAW_SUPABASE_PUBLIC_URL || SUPABASE_DIRECT_URL);
+const configuredSupabaseUrls = [
+  normalizeConfiguredUrl(RAW_SUPABASE_PUBLIC_URL),
+  normalizeConfiguredUrl(RAW_SUPABASE_URL),
+  normalizeConfiguredUrl(RAW_SUPABASE_DIRECT_URL),
+].filter(Boolean);
+
+const proxySupabaseUrl = configuredSupabaseUrls.find((url) => !isSupabaseHostedUrl(url));
+const directSupabaseUrl =
+  normalizeConfiguredUrl(RAW_SUPABASE_DIRECT_URL) ||
+  configuredSupabaseUrls.find((url) => isSupabaseHostedUrl(url)) ||
+  normalizeUrl(DEFAULT_SUPABASE_URL);
+
+export const SUPABASE_DIRECT_URL = directSupabaseUrl;
+export const SUPABASE_PUBLIC_URL =
+  proxySupabaseUrl ||
+  normalizeConfiguredUrl(RAW_SUPABASE_PUBLIC_URL) ||
+  normalizeConfiguredUrl(RAW_SUPABASE_URL) ||
+  SUPABASE_DIRECT_URL;
 export const SUPABASE_URL = SUPABASE_PUBLIC_URL;
 export const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 export const SUPABASE_FALLBACK_URL = SUPABASE_PUBLIC_URL === SUPABASE_DIRECT_URL ? '' : SUPABASE_DIRECT_URL;
@@ -208,8 +244,12 @@ export const fetchWithSupabaseFallback = (
   return sharedSupabaseNetworkFetch(input, init);
 };
 
-if (IS_DEVELOPMENT && SUPABASE_PUBLIC_URL === SUPABASE_DIRECT_URL) {
-  console.warn('Supabase public URL is the same as direct URL. Add VITE_SUPABASE_PUBLIC_URL with a stable proxy/custom domain for mobile ISP resilience.');
+if (SUPABASE_PUBLIC_URL === SUPABASE_DIRECT_URL) {
+  console.warn('Supabase proxy route is not active. Set VITE_SUPABASE_PUBLIC_URL to your Worker/custom domain for mobile ISP resilience.');
+}
+
+if (!RAW_SUPABASE_PUBLIC_URL && !RAW_SUPABASE_URL) {
+  console.warn('Supabase URL env vars are missing. Falling back to default project URL.');
 }
 
 /**

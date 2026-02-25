@@ -1,6 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 import {
   SUPABASE_ANON_KEY,
+  SUPABASE_DIRECT_URL,
+  SUPABASE_FALLBACK_URL,
   SUPABASE_URL,
   createSupabaseNetworkFetch,
 } from '../config/env';
@@ -11,7 +13,9 @@ const supabaseUrl = SUPABASE_URL;
 const supabaseAnonKey = SUPABASE_ANON_KEY || FALLBACK_SUPABASE_ANON_KEY;
 
 console.log("SUPABASE ENV:", {
-  url: import.meta.env.VITE_SUPABASE_PUBLIC_URL ? 'PUBLIC URL ENV' : 'DIRECT URL ENV/FALLBACK',
+  baseUrl: SUPABASE_URL,
+  directUrl: SUPABASE_DIRECT_URL,
+  fallbackUrl: SUPABASE_FALLBACK_URL || 'none',
   key: import.meta.env.VITE_SUPABASE_ANON_KEY ? 'FROM ENV' : 'USING FALLBACK'
 });
 

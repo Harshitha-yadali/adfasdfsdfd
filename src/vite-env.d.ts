@@ -8,6 +8,7 @@ interface ImportMetaEnv {
   // Supabase
   readonly VITE_SUPABASE_URL: string;
   readonly VITE_SUPABASE_PUBLIC_URL?: string;
+  readonly VITE_SUPABASE_DIRECT_URL?: string;
   readonly VITE_SUPABASE_ANON_KEY: string;
   
   // Razorpay (public key only)
