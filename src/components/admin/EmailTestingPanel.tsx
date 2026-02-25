@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Mail, Send, CheckCircle, XCircle, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import { useIsAdmin } from '../../hooks/useIsAdmin';
-import { SUPABASE_ANON_KEY, getSupabaseEdgeFunctionUrl } from '../../config/env';
+import { SUPABASE_ANON_KEY, fetchWithSupabaseFallback, getSupabaseEdgeFunctionUrl } from '../../config/env';
 
 interface EmailLog {
   id: string;
@@ -82,7 +82,7 @@ export const EmailTestingPanel: React.FC = () => {
     try {
       const { data: sessionData } = await supabase.auth.getSession();
       const token = sessionData.session?.access_token;
-      const resp = await fetch(getSupabaseEdgeFunctionUrl('test-email'), {
+      const resp = await fetchWithSupabaseFallback(getSupabaseEdgeFunctionUrl('test-email'), {
         method: 'GET',
         headers: {
           'Authorization': token ? `Bearer ${token}` : `Bearer ${SUPABASE_ANON_KEY}`,
@@ -114,7 +114,7 @@ export const EmailTestingPanel: React.FC = () => {
     try {
       const { data: sessionData } = await supabase.auth.getSession();
       const token = sessionData.session?.access_token;
-      const response = await fetch(getSupabaseEdgeFunctionUrl('test-email'), {
+      const response = await fetchWithSupabaseFallback(getSupabaseEdgeFunctionUrl('test-email'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

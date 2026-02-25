@@ -1,6 +1,6 @@
 // src/services/paymentService.ts
 import { supabase } from '../lib/supabaseClient';
-import { getSupabaseEdgeFunctionUrl } from '../config/env';
+import { fetchWithSupabaseFallback, getSupabaseEdgeFunctionUrl } from '../config/env';
 
 // ---------- Types ----------
 export type { PlanCategory } from '../types/payment';
@@ -805,7 +805,7 @@ class PaymentService {
   // ---------- Coupon helpers ----------
   private async validateCouponServer(couponCode: string, userId: string, accessToken: string) {
     try {
-      const response = await fetch(getSupabaseEdgeFunctionUrl('validate-coupon'), {
+      const response = await fetchWithSupabaseFallback(getSupabaseEdgeFunctionUrl('validate-coupon'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
         body: JSON.stringify({ couponCode, userId }),
@@ -917,7 +917,7 @@ class PaymentService {
   ): Promise<{ success: boolean; error?: string }> {
     try {
       console.log('PaymentService: Calling create-order Edge Function...');
-      const response = await fetch(getSupabaseEdgeFunctionUrl('create-order'), {
+      const response = await fetchWithSupabaseFallback(getSupabaseEdgeFunctionUrl('create-order'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
         body: JSON.stringify({
@@ -949,7 +949,7 @@ class PaymentService {
           handler: async (rzpRes: any) => {
             try {
               console.log('PaymentService: Calling verify-payment Edge Function...');
-              const verifyResponse = await fetch(getSupabaseEdgeFunctionUrl('verify-payment'), {
+              const verifyResponse = await fetchWithSupabaseFallback(getSupabaseEdgeFunctionUrl('verify-payment'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
                 body: JSON.stringify({

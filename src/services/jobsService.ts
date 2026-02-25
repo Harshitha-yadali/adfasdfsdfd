@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabaseClient';
 import { JobListing, JobFilters, AutoApplyResult, ApplicationHistory, OptimizedResume } from '../types/jobs';
 import { ResumeData } from '../types/resume';
 import { exportToPDF } from '../utils/exportUtils';
-import { getSupabaseEdgeFunctionUrl } from '../config/env';
+import { fetchWithSupabaseFallback, getSupabaseEdgeFunctionUrl } from '../config/env';
 
 export const isEligibleYearsColumnMissing = (error: any): boolean => {
   if (!error) return false;
@@ -390,7 +390,7 @@ async getJobListings(filters: JobFilters = {}, limit = 20, offset = 0): Promise<
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('Authentication required');
 
-      const response = await fetch(
+      const response = await fetchWithSupabaseFallback(
         getSupabaseEdgeFunctionUrl('optimize-resume-for-job'),
         {
           method: 'POST',
@@ -457,7 +457,7 @@ async getJobListings(filters: JobFilters = {}, limit = 20, offset = 0): Promise<
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('Authentication required');
 
-      const response = await fetch(
+      const response = await fetchWithSupabaseFallback(
         getSupabaseEdgeFunctionUrl('auto-apply'),
         {
           method: 'POST',
@@ -496,7 +496,7 @@ async getJobListings(filters: JobFilters = {}, limit = 20, offset = 0): Promise<
         ...(filters.method && { method: filters.method }),
       });
 
-      const response = await fetch(
+      const response = await fetchWithSupabaseFallback(
         getSupabaseEdgeFunctionUrl('get-application-history', params),
         {
           method: 'GET',

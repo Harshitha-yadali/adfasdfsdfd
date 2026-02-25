@@ -26,7 +26,7 @@ import {
 } from 'lucide-react';
 import { careersData } from '../../data/careersData'; // Import the new data file
 import { useAuth } from '../../contexts/AuthContext';
-import { SUPABASE_ANON_KEY, getSupabaseEdgeFunctionUrl } from '../../config/env';
+import { SUPABASE_ANON_KEY, fetchWithSupabaseFallback, getSupabaseEdgeFunctionUrl } from '../../config/env';
 
 interface Job {
   id: string;
@@ -200,7 +200,7 @@ export const JobDetailsPage: React.FC<JobDetailsPageProps> = ({ onShowAuth }) =>
         applicationDate
       };
 
-      const response = await fetch(
+      const response = await fetchWithSupabaseFallback(
         getSupabaseEdgeFunctionUrl('submit-job-application'),
         {
           method: 'POST',

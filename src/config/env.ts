@@ -97,6 +97,8 @@ const SUPABASE_NETWORK_ERROR_PATTERNS = [
   'networkerror',
   'err_network_changed',
   'network changed',
+  'load failed',
+  'network request failed',
 ];
 
 export const isSupabaseNetworkRoutingError = (error: unknown): boolean => {
@@ -108,7 +110,37 @@ export const isSupabaseNetworkRoutingError = (error: unknown): boolean => {
 const resolveRequestUrl = (input: RequestInfo | URL): string | null => {
   if (typeof input === 'string') return input;
   if (input instanceof URL) return input.toString();
+  if (input instanceof Request) return input.url;
   return null;
+};
+
+const UNIQUE_SUPABASE_BASE_URLS = Array.from(
+  new Set([SUPABASE_PUBLIC_URL, SUPABASE_FALLBACK_URL].filter(Boolean))
+);
+
+const getSupabaseFallbackPlan = (requestUrl: string): { matchedBase: string; attemptUrls: string[] } | null => {
+  const matchedBase = UNIQUE_SUPABASE_BASE_URLS.find((baseUrl) => requestUrl.startsWith(baseUrl));
+  if (!matchedBase) return null;
+
+  const attemptUrls = [
+    requestUrl,
+    ...UNIQUE_SUPABASE_BASE_URLS
+      .filter((baseUrl) => baseUrl !== matchedBase)
+      .map((baseUrl) => requestUrl.replace(matchedBase, baseUrl)),
+  ];
+
+  return { matchedBase, attemptUrls };
+};
+
+const createRetryInput = (
+  originalInput: RequestInfo | URL,
+  requestTemplate: Request | null,
+  retryUrl: string
+): RequestInfo | URL => {
+  if (typeof originalInput === 'string') return retryUrl;
+  if (originalInput instanceof URL) return new URL(retryUrl);
+  if (requestTemplate) return new Request(retryUrl, requestTemplate.clone());
+  return originalInput;
 };
 
 /**
@@ -117,40 +149,56 @@ const resolveRequestUrl = (input: RequestInfo | URL): string | null => {
  */
 export const createSupabaseNetworkFetch = (): typeof fetch => {
   return async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+    const requestUrl = resolveRequestUrl(input);
+    const fallbackPlan = requestUrl ? getSupabaseFallbackPlan(requestUrl) : null;
+    const requestTemplate = input instanceof Request ? input.clone() : null;
+
     try {
       return await fetch(input, init);
     } catch (error) {
-      const requestUrl = resolveRequestUrl(input);
-      const canRetryWithFallback =
-        !!SUPABASE_FALLBACK_URL &&
-        !!requestUrl &&
-        requestUrl.startsWith(SUPABASE_URL) &&
-        SUPABASE_FALLBACK_URL !== SUPABASE_URL &&
-        isSupabaseNetworkRoutingError(error);
-
-      if (!canRetryWithFallback) {
+      const shouldRetry = !!fallbackPlan && isSupabaseNetworkRoutingError(error);
+      if (!shouldRetry) {
         throw error;
       }
 
-      const fallbackUrl = requestUrl.replace(SUPABASE_URL, SUPABASE_FALLBACK_URL);
-      console.warn('Primary Supabase route failed, retrying via fallback URL', {
-        primaryUrl: SUPABASE_URL,
-        fallbackUrl: SUPABASE_FALLBACK_URL,
-      });
+      let lastError: unknown = error;
+      for (const retryUrl of fallbackPlan.attemptUrls.slice(1)) {
+        console.warn('Supabase request failed, retrying with alternate route', {
+          originalUrl: requestUrl,
+          retryUrl,
+        });
 
-      if (typeof input === 'string') {
-        return fetch(fallbackUrl, init);
+        try {
+          const retryInput = createRetryInput(input, requestTemplate, retryUrl);
+          return await fetch(retryInput, init);
+        } catch (retryError) {
+          lastError = retryError;
+          if (!isSupabaseNetworkRoutingError(retryError)) {
+            throw retryError;
+          }
+        }
       }
 
-      if (input instanceof URL) {
-        return fetch(new URL(fallbackUrl), init);
-      }
-
-      // Do not retry Request objects to avoid body stream reuse issues.
-      throw error;
+      throw lastError;
     }
   };
 };
+
+const sharedSupabaseNetworkFetch = createSupabaseNetworkFetch();
+
+/**
+ * Shared fetch wrapper for Supabase edge-function calls.
+ */
+export const fetchWithSupabaseFallback = (
+  input: RequestInfo | URL,
+  init?: RequestInit
+): Promise<Response> => {
+  return sharedSupabaseNetworkFetch(input, init);
+};
+
+if (IS_DEVELOPMENT && SUPABASE_PUBLIC_URL === SUPABASE_DIRECT_URL) {
+  console.warn('Supabase public URL is the same as direct URL. Add VITE_SUPABASE_PUBLIC_URL with a stable proxy/custom domain for mobile ISP resilience.');
+}
 
 /**
  * Get Worker API endpoint
@@ -233,6 +281,7 @@ const env = {
   // Helpers
   getSupabaseEdgeFunctionUrl,
   createSupabaseNetworkFetch,
+  fetchWithSupabaseFallback,
   isSupabaseNetworkRoutingError,
   getWorkerEndpoint,
   isConfigured,

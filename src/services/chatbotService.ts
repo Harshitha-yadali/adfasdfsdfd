@@ -1,4 +1,4 @@
-import { SUPABASE_ANON_KEY, getSupabaseEdgeFunctionUrl } from '../config/env';
+import { SUPABASE_ANON_KEY, fetchWithSupabaseFallback, getSupabaseEdgeFunctionUrl } from '../config/env';
 
 const AI_PROXY_URL = getSupabaseEdgeFunctionUrl('ai-proxy');
 
@@ -134,7 +134,7 @@ async function tryAIResponse(userMessage: string): Promise<string | null> {
   if (!SUPABASE_ANON_KEY) return null;
 
   try {
-    const res = await fetch(AI_PROXY_URL, {
+    const res = await fetchWithSupabaseFallback(AI_PROXY_URL, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${SUPABASE_ANON_KEY}`,

@@ -40,7 +40,7 @@ import { AlertModal } from './AlertModal';
 import { DeviceManagement } from './security/DeviceManagement';
 import { supabase } from '../lib/supabaseClient';
 import { useNavigate } from 'react-router-dom';
-import { getSupabaseEdgeFunctionUrl } from '../config/env';
+import { fetchWithSupabaseFallback, getSupabaseEdgeFunctionUrl } from '../config/env';
 import { ProfileBookingsTab } from './profile/ProfileBookingsTab';
 import { ProfileUsageTab } from './profile/ProfileUsageTab';
 import { ProfilePaymentsTab } from './profile/ProfilePaymentsTab';
@@ -574,7 +574,7 @@ export const UserProfileManagement: React.FC = () => {
         throw new Error('Authentication required for redemption.');
       }
 
-      const response = await fetch(getSupabaseEdgeFunctionUrl('send-redemption-email'), {
+      const response = await fetchWithSupabaseFallback(getSupabaseEdgeFunctionUrl('send-redemption-email'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

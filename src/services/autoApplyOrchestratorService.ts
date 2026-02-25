@@ -5,7 +5,7 @@ import {
   ProjectSuggestion,
 } from './aiProjectSuggestionService';
 import jsPDF from 'jspdf';
-import { SUPABASE_ANON_KEY, getSupabaseEdgeFunctionUrl } from '../config/env';
+import { SUPABASE_ANON_KEY, fetchWithSupabaseFallback, getSupabaseEdgeFunctionUrl } from '../config/env';
 
 export interface AutoApplyStatus {
   step: 'analyzing' | 'suggesting_projects' | 'optimizing' | 'generating_pdf' | 'submitting' | 'completed' | 'failed';
@@ -360,7 +360,7 @@ class AutoApplyOrchestratorService {
   ): Promise<void> {
     const edgeFunctionUrl = getSupabaseEdgeFunctionUrl('auto-apply-submit');
 
-    const response = await fetch(edgeFunctionUrl, {
+    const response = await fetchWithSupabaseFallback(edgeFunctionUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

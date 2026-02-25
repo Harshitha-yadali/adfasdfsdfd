@@ -1,5 +1,5 @@
 import { AutoApplyFormData, FormFieldMapping, FormAnalysisResult } from '../types/autoApply';
-import { SUPABASE_ANON_KEY, getSupabaseEdgeFunctionUrl } from '../config/env';
+import { SUPABASE_ANON_KEY, fetchWithSupabaseFallback, getSupabaseEdgeFunctionUrl } from '../config/env';
 
 export interface BrowserlessConfig {
   wsEndpoint: string;
@@ -65,7 +65,7 @@ class BrowserlessService {
     }
 
         
-    const response = await fetch(`${BROWSERLESS_AUTOMATION_URL}`, {
+    const response = await fetchWithSupabaseFallback(BROWSERLESS_AUTOMATION_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -97,7 +97,7 @@ class BrowserlessService {
     }
 
         
-    const response = await fetch(`${BROWSERLESS_AUTOMATION_URL}`, {
+    const response = await fetchWithSupabaseFallback(BROWSERLESS_AUTOMATION_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -138,7 +138,7 @@ class BrowserlessService {
     }
 
         
-    const response = await fetch(`${BROWSERLESS_AUTOMATION_URL}`, {
+    const response = await fetchWithSupabaseFallback(BROWSERLESS_AUTOMATION_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -179,7 +179,7 @@ class BrowserlessService {
     }
 
         
-    const response = await fetch(`${BROWSERLESS_AUTOMATION_URL}`, {
+    const response = await fetchWithSupabaseFallback(BROWSERLESS_AUTOMATION_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -214,7 +214,7 @@ class BrowserlessService {
     }
 
         
-    const response = await fetch(`${BROWSERLESS_AUTOMATION_URL}`, {
+    const response = await fetchWithSupabaseFallback(BROWSERLESS_AUTOMATION_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -245,7 +245,7 @@ class BrowserlessService {
 
     try {
             
-      const response = await fetch(`${BROWSERLESS_AUTOMATION_URL}`, {
+      const response = await fetchWithSupabaseFallback(BROWSERLESS_AUTOMATION_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -277,7 +277,7 @@ class BrowserlessService {
 
     try {
             
-      await fetch(`${BROWSERLESS_AUTOMATION_URL}`, {
+      await fetchWithSupabaseFallback(BROWSERLESS_AUTOMATION_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -300,7 +300,7 @@ class BrowserlessService {
 
     try {
             
-      const response = await fetch(`${BROWSERLESS_AUTOMATION_URL}`, {
+      const response = await fetchWithSupabaseFallback(BROWSERLESS_AUTOMATION_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

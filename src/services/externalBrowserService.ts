@@ -3,6 +3,7 @@ import { AutoApplyRequest, AutoApplyResponse, FormAnalysisResult } from '../type
 import { browserlessService } from './browserlessService';
 import { detectPlatformStrategy, mapFormDataToFields } from './platformAutomationStrategies';
 import { SUPABASE_URL } from '../config/env';
+import { fetchWithSupabaseFallback } from '../config/env';
 
 export type AutomationMode = 'browserless' | 'external' | 'simulation';
 
@@ -34,12 +35,20 @@ class ExternalBrowserService {
     return this.automationMode;
   }
 
+  private executeFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+    if (typeof input === 'string' && input.startsWith(SUPABASE_URL)) {
+      return fetchWithSupabaseFallback(input, init);
+    }
+
+    return fetch(input, init);
+  }
+
   /**
    * Analyzes a job application form to understand its structure
    */
   async analyzeApplicationForm(applicationUrl: string): Promise<FormAnalysisResult> {
     try {
-      const response = await fetch(`${this.baseUrl}/analyze-form`, {
+      const response = await this.executeFetch(`${this.baseUrl}/analyze-form`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -75,7 +84,7 @@ class ExternalBrowserService {
         ? `${this.baseUrl}/auto-apply`
         : `${this.baseUrl}/auto-apply`;
 
-      const response = await fetch(endpoint, {
+      const response = await this.executeFetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -196,7 +205,7 @@ class ExternalBrowserService {
         ? `${this.baseUrl}/auto-apply-status/${applicationId}`
         : `${this.baseUrl}/auto-apply/status/${applicationId}`;
 
-      const response = await fetch(endpoint, {
+      const response = await this.executeFetch(endpoint, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${this.apiKey}`,
@@ -238,7 +247,7 @@ class ExternalBrowserService {
    */
   async cancelAutoApply(applicationId: string): Promise<boolean> {
     try {
-      const response = await fetch(`${this.baseUrl}/auto-apply/cancel/${applicationId}`, {
+      const response = await this.executeFetch(`${this.baseUrl}/auto-apply/cancel/${applicationId}`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${this.apiKey}`,
@@ -262,7 +271,7 @@ class ExternalBrowserService {
         return true;
       }
 
-      const response = await fetch(`${this.baseUrl}/health`, {
+      const response = await this.executeFetch(`${this.baseUrl}/health`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${this.apiKey}`,

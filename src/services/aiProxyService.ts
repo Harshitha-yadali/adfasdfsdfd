@@ -2,7 +2,7 @@
 // Unified frontend service for all AI API calls
 // Uses local API keys for development, Supabase Edge Function for production
 
-import { SUPABASE_ANON_KEY, getSupabaseEdgeFunctionUrl } from '../config/env';
+import { SUPABASE_ANON_KEY, fetchWithSupabaseFallback, getSupabaseEdgeFunctionUrl } from '../config/env';
 
 const PROXY_URL = getSupabaseEdgeFunctionUrl('ai-proxy');
 
@@ -36,7 +36,7 @@ const callProxy = async (service: string, action: string, params: Record<string,
     );
   }
 
-  const response = await fetch(PROXY_URL, {
+  const response = await fetchWithSupabaseFallback(PROXY_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

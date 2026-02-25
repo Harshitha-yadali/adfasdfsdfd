@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabaseClient';
-import { SUPABASE_ANON_KEY, getSupabaseEdgeFunctionUrl } from '../config/env';
+import { SUPABASE_ANON_KEY, fetchWithSupabaseFallback, getSupabaseEdgeFunctionUrl } from '../config/env';
 
 export interface EmailTemplate {
   id: string;
@@ -344,7 +344,7 @@ class EmailTemplateService {
       const { data: sessionData } = await supabase.auth.getSession();
       const token = sessionData.session?.access_token;
 
-      const response = await fetch(
+      const response = await fetchWithSupabaseFallback(
         getSupabaseEdgeFunctionUrl('test-email'),
         {
           method: 'POST',
